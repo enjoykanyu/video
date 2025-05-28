@@ -1,10 +1,23 @@
 <template>
+  <div class="app-container">
+    <!-- Top Tab Navigation -->
+    <div class="top-tab-bar">
+      <div class="top-tabs">
+        <div class="top-tab" :class="{ active: currentTopTab === 'live' }" @click="switchTopTab('live')">直播</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'follow' }" @click="switchTopTab('follow')">关注</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'shop' }" @click="switchTopTab('shop')">商城</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'friends' }" @click="switchTopTab('friends')">好友</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'recommend' }" @click="switchTopTab('recommend')">推荐</div>
+      </div>
+    </div>
+
   <div class="video-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd" ref="videoContainer">
     <!-- 视频容器 -->
     <div class="video-wrapper" :class="currentVideo.isLandscape ? 'landscape' : 'portrait'">
       <video
           ref="videoElement"
           :src="currentVideo.url"
+          :style="videoStyle"
           autoplay
           loop
           @timeupdate="updateProgress"
@@ -168,8 +181,27 @@
         </transition>
       </div>
     </div>
-  </div></template>
+  </div>
 
+    <!-- Bottom Tab Bar -->
+    <div class="bottom-tab-bar">
+      <div class="bottom-tabs">
+        <div class="bottom-tab" :class="{ active: currentBottomTab === 'home' }" @click="switchBottomTab('home')">
+          <span>首页</span>
+        </div>
+        <div class="bottom-tab" :class="{ active: currentBottomTab === 'publish' }" @click="switchBottomTab('publish')">
+          <span>+</span>
+        </div>
+        <div class="bottom-tab" :class="{ active: currentBottomTab === 'message' }" @click="switchBottomTab('message')">
+          <span>消息</span>
+        </div>
+        <div class="bottom-tab" :class="{ active: currentBottomTab === 'profile' }" @click="switchBottomTab('profile')">
+          <span>我</span>
+        </div>
+      </div>
+    </div>
+</div>
+</template>
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 
