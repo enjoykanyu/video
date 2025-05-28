@@ -196,6 +196,8 @@ interface Danmaku {
   duration: number
   time: number
 }
+const currentTopTab = ref('recommend') // 默认选中推荐tab
+const currentBottomTab = ref('home')   // 默认选中首页
 
 const videos = reactive<Video[]>([
   {
@@ -625,11 +627,44 @@ const calculateDuration = (text) => {
 .video-wrapper {
   position: relative;
   width: 100%;
-  overflow: hidden;
-  background: #000;
-  height: 100vh;
+  height: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
+}
+/* 竖版视频样式 */
+.video-wrapper.portrait video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 横版视频样式（类似抖音效果） */
+.video-wrapper.landscape video {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 横版视频时的背景处理 */
+.video-wrapper.landscape::before,
+.video-wrapper.landscape::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc((100% - 100vw * 9/16) / 2);
+  background-color: #000;
+  z-index: -1;
+}
+
+.video-wrapper.landscape::before {
+  top: 0;
+}
+
+.video-wrapper.landscape::after {
+  bottom: 0;
 }
 /* 横屏视频适配 */
 .landscape video {
@@ -649,13 +684,17 @@ video {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 保持视频比例填充 */
+
 }
 
 /* 进度条容器 */
 .progress-container {
   z-index: 100;
   position: absolute;
-  bottom: 0;
+  bottom: 37px;
   left: 0;
   right: 0;
   padding: 12px 20px;
@@ -687,7 +726,7 @@ video {
 .interaction-panel {
   position: absolute;
   right: 15px;
-  bottom: 80px;
+  bottom: 130px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1167,10 +1206,27 @@ video {
 .avatar:hover {
   transform: scale(1.05);
 }
+/* 基础样式 */
+html, body, .app-container {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* 禁用全局滚动 */
+}
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 视口高度 */
+}
+
 .video-container {
-  width: 100vw;
+  position: relative;
+  width: 100%;
   height: 100vh;
-  will-change: transform; /* 优化动画性能 */
+  overflow: hidden;
+  background-color: #000;
+
 
   video {
     width: 100%;
@@ -1261,4 +1317,61 @@ video {
     transform: translateX(calc(-100% - 100vw)); /* 完全移出左侧 */
   }
 }
+/* Top Tab Bar */
+.top-tab-bar {
+  background-color: #000;
+  color: #fff;
+}
+
+.top-tab {
+  color: rgba(255, 255, 255, 0.7); /* 默认半透明白色 */
+}
+
+.top-tab.active {
+  color: #fff; /* 选中时完全不透明白色 */
+  font-weight: bold; /* 可选：加粗字体 */
+}
+
+
+.top-tabs {
+  display: flex;
+  justify-content: space-around;
+  height:39px
+}
+
+
+
+
+/* Bottom Tab Bar */
+.bottom-tab-bar {
+  background-color: #000;
+  color: #fff;
+  height: 50px; /* 标准Tab栏高度 */
+  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.bottom-tab {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bottom-tab.active {
+  color: #fff;
+}
+
+
+.bottom-tabs {
+  display: flex;
+  justify-content: space-around;
+}
+
+
+
+.bottom-tab span {
+  font-size: 20px;
+}
+
 </style>
