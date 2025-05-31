@@ -1,209 +1,238 @@
 <template>
   <div class="app-container">
-    <!-- Top Tab Navigation -->
+    <!-- 顶部导航栏 -->
     <div class="top-tab-bar">
       <div class="top-tabs">
         <div class="top-tab" :class="{ active: currentTopTab === 'live' }" @click="switchTopTab('live')">直播</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'city' }" @click="switchTopTab('city')">同城</div>
         <div class="top-tab" :class="{ active: currentTopTab === 'follow' }" @click="switchTopTab('follow')">关注</div>
         <div class="top-tab" :class="{ active: currentTopTab === 'shop' }" @click="switchTopTab('shop')">商城</div>
-        <div class="top-tab" :class="{ active: currentTopTab === 'friends' }" @click="switchTopTab('friends')">好友</div>
-        <div class="top-tab" :class="{ active: currentTopTab === 'recommend' }" @click="switchTopTab('recommend')">推荐</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'music' }" @click="switchTopTab('music')">音乐</div>
+        <div class="top-tab" :class="{ active: currentTopTab === 'recommend' }" @click="switchTopTab('recommend')">推荐<div class="tab-underline" v-if="currentTopTab === 'recommend'"></div></div>
+      </div>
+      <div class="top-search">
+        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke="#fff" stroke-width="2" fill="none"/><line x1="18" y1="18" x2="15.5" y2="15.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
     </div>
 
-  <div class="video-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd" ref="videoContainer">
-    <!-- 视频容器 -->
-    <div class="video-wrapper" :class="currentVideo.isLandscape ? 'landscape' : 'portrait'">
-      <video
-          ref="videoElement"
-          :src="currentVideo.url"
-          :style="videoStyle"
-          autoplay
-          loop
-          @timeupdate="updateProgress"
-          @click="handleVideoClick"
-          @dblclick="handleLike"
-      ></video>
+    <div class="video-container" @touchstart="handleTouchStart" @touchend="handleTouchEnd" ref="videoContainer">
+      <!-- 视频容器 -->
+      <div class="video-wrapper" :class="currentVideo.isLandscape ? 'landscape' : 'portrait'">
+        <video
+            ref="videoElement"
+            :src="currentVideo.url"
+            :style="videoStyle"
+            autoplay
+            loop
+            @timeupdate="updateProgress"
+            @click="handleVideoClick"
+            @dblclick="handleLike"
+        ></video>
 
-      <!-- 暂停图标 -->
-      <transition name="fade">
-        <div v-if="!isPlaying" class="pause-icon">⏸</div>
-      </transition>
-
-      <!-- 进度条 -->
-      <div class="progress-container">
-        <!-- 在video-info上方添加弹幕按钮 -->
-          <button class="danmaku-btn" @click="toggleDanmakuInput">弹</button>
-          <div class="video-info">
-            <!-- 原有信息 -->
-          </div>
-
-          <!-- 弹幕输入框 -->
-          <div v-if="showDanmakuInput" class="danmaku-input-box">
-            <input
-                v-model="danmakuText"
-                placeholder="输入弹幕内容"
-                @keyup.enter="sendDanmaku"
-            >
-            <button @click="sendDanmaku">发送</button>
-          </div>
-
-        <div class="video-info">
-          <h3>@{{ currentVideo.author }}</h3>
-          <p>{{ currentVideo.title }}</p>
-          <div class="tags">
-            <span v-for="tag in currentVideo.tags" :key="tag">#{{ tag }}</span>
-          </div>
-        </div>
-        <input
-            type="range"
-            min="0"
-            max="100"
-            step="0.1"
-            v-model="progress"
-            @input="handleSeek"
-            class="progress-bar"
-        >
-      </div>
-
-      <!-- 弹幕容器 -->
-      <div class="danmaku-container">
-        <div
-            v-for="danmu in visibleDanmus"
-            :key="danmu.id"
-            class="danmu"
-            :style="{
-            top: `${danmu.position}%`,
-            animationDuration: `${danmu.duration}s`
-          }"
-        >{{ danmu.text }}</div>
-      </div>
-    </div>
-
-    <!-- 右侧交互区 -->
-    <div class="interaction-panel">
-      <div class="user-section">
-        <div class="avatar-wrapper">
-          <img
-              :src="currentVideo.authorAvatar"
-              class="avatar"
-              @click="navigateToProfile"
-          >
-          <button
-              class="follow-btn"
-              @click="toggleFollow"
-              :class="{ followed: currentVideo.isFollowing }"
-          >
-            <svg class="follow-icon" viewBox="0 0 24 24">
-              <path v-if="!currentVideo.isFollowing" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-              <path v-else d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="action-buttons">
-        <div class="action-item" @click="handleLike">
-          <div class="icon-wrapper">
-            <transition name="scale">
-              <div v-if="currentVideo.isLiked" class="icon">❤️</div>
-              <div v-else class="icon">🤍</div>
-            </transition>
-          </div>
-          <div class="count">{{ currentVideo.likes }}</div>
-        </div>
-
-        <div class="action-item" @click="handleCollect">
-          <div class="icon-wrapper">
-            <transition name="scale">
-              <div v-if="currentVideo.isCollected" class="icon">⭐</div>
-              <div v-else class="icon">☆</div>
-            </transition>
-          </div>
-          <div class="count">{{ currentVideo.collects }}</div>
-        </div>
-
-        <div class="action-item" @click="toggleComments">
-          <div class="icon-wrapper">
-            <div class="icon">💬</div>
-          </div>
-          <div class="count">{{ currentVideo.comments.length }}</div>
-        </div>
-
-        <!-- 带过渡效果的遮罩层 -->
+        <!-- 暂停图标 -->
         <transition name="fade">
-          <div
-              v-if="showComments"
-              class="comments-overlay"
-              @click.self="closeComments"
-          >
-            <transition name="slide">
-              <div
-                  v-if="showComments"
-                  class="comments-drawer"
-              >
-                <div class="drawer-header">
-                  <h3>视频评论（{{ currentVideo.comments?.length || 0 }}）</h3>
-                  <button class="close-btn" @click="closeComments">
-                    <svg class="icon" viewBox="0 0 24 24">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                  </button>
-                </div>
-                <!-- 评论列表 -->
-                <div class="comments-container">
-                  <transition-group
-                      name="comment-fade"
-                      tag="div"
-                  >
-                    <div
-                        v-for="(comment, index) in currentVideo.comments"
-                        :key="comment.id || index"
-                        class="comment-item"
-                    >
-                      <div class="user-avatar">
-                        <img
-                            :src="comment.user.avatar"
-                            :alt="comment.user.name"
-                            class="avatar-img"
-                        >
-                      </div>
-                      <div class="comment-content">
-                        <div class="username">{{ comment.user.name }}</div>
-                        <div class="text">{{ comment.content }}</div>
-                      </div>
-                    </div>
-                  </transition-group>
-                </div>
-              </div>
-            </transition>
-          </div>
+          <div v-if="!isPlaying" class="pause-icon">⏸</div>
         </transition>
+
+        <!-- 进度条 -->
+        <div class="progress-container">
+          <!-- 在video-info上方添加弹幕按钮 -->
+            <button class="danmaku-btn" @click="toggleDanmakuInput">弹</button>
+            <div class="video-info">
+              <!-- 原有信息 -->
+            </div>
+
+            <!-- 弹幕输入框 -->
+            <div v-if="showDanmakuInput" class="danmaku-input-box">
+              <input
+                  v-model="danmakuText"
+                  placeholder="输入弹幕内容"
+                  @keyup.enter="sendDanmaku"
+              >
+              <button @click="sendDanmaku">发送</button>
+            </div>
+
+          <div class="video-info">
+            <h3>@{{ currentVideo.author }}</h3>
+            <p>{{ currentVideo.title }}</p>
+            <div class="tags">
+              <span v-for="tag in currentVideo.tags" :key="tag">#{{ tag }}</span>
+            </div>
+          </div>
+          <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              v-model="progress"
+              @input="handleSeek"
+              class="progress-bar"
+          >
+        </div>
+
+        <!-- 弹幕容器 -->
+        <div class="danmaku-container">
+          <div
+              v-for="danmu in visibleDanmus"
+              :key="danmu.id"
+              class="danmu"
+              :style="{
+              top: `${danmu.position}%`,
+              animationDuration: `${danmu.duration}s`
+            }"
+          >{{ danmu.text }}</div>
+        </div>
+      </div>
+
+      <!-- 右侧交互区 -->
+      <div class="interaction-panel">
+        <div class="user-section">
+          <div class="avatar-wrapper">
+            <img
+                :src="currentVideo.authorAvatar"
+                class="avatar"
+                @click="navigateToProfile"
+            >
+            <button
+                class="follow-btn"
+                @click="toggleFollow"
+                :class="{ followed: currentVideo.isFollowing }"
+            >
+              <svg class="follow-icon" viewBox="0 0 24 24">
+                <path v-if="!currentVideo.isFollowing" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                <path v-else d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <div class="action-item" @click="handleLike">
+            <div class="icon-wrapper">
+              <transition name="scale">
+                <div v-if="currentVideo.isLiked" class="icon">❤️</div>
+                <div v-else class="icon">🤍</div>
+              </transition>
+            </div>
+            <div class="count">{{ currentVideo.likes }}</div>
+          </div>
+
+          <div class="action-item" @click="handleCollect">
+            <div class="icon-wrapper">
+              <transition name="scale">
+                <div v-if="currentVideo.isCollected" class="icon">⭐</div>
+                <div v-else class="icon">☆</div>
+              </transition>
+            </div>
+            <div class="count">{{ currentVideo.collects }}</div>
+          </div>
+
+          <div class="action-item" @click="toggleComments">
+            <div class="icon-wrapper">
+              <div class="icon">💬</div>
+            </div>
+            <div class="count">{{ currentVideo.comments.length }}</div>
+          </div>
+
+          <!-- 新增分享按钮 -->
+          <div class="action-item" @click="handleShare">
+            <div class="icon-wrapper">
+              <div class="icon">🔗</div>
+            </div>
+            <div class="count">分享</div>
+          </div>
+
+          <!-- 新增音乐碟片和音乐名 -->
+          <div class="music-disc-block">
+            <div class="music-disc">
+              <img :src="currentVideo.musicCover || '/default-music.png'" alt="music" />
+            </div>
+            <div class="music-name">{{ currentVideo.musicName || '背景音乐' }}</div>
+          </div>
+
+          <!-- 带过渡效果的遮罩层 -->
+          <transition name="fade">
+            <div
+                v-if="showComments"
+                class="comments-overlay"
+                @click.self="closeComments"
+            >
+              <transition name="slide">
+                <div
+                    v-if="showComments"
+                    class="comments-drawer"
+                >
+                  <div class="drawer-header">
+                    <h3>视频评论（{{ currentVideo.comments?.length || 0 }}）</h3>
+                    <button class="close-btn" @click="closeComments">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <!-- 评论列表 -->
+                  <div class="comments-container">
+                    <transition-group
+                        name="comment-fade"
+                        tag="div"
+                    >
+                      <div
+                          v-for="(comment, index) in currentVideo.comments"
+                          :key="comment.id || index"
+                          class="comment-item"
+                      >
+                        <div class="user-avatar">
+                          <img
+                              :src="comment.user.avatar"
+                              :alt="comment.user.name"
+                              class="avatar-img"
+                          >
+                        </div>
+                        <div class="comment-content">
+                          <div class="username">{{ comment.user.name }}</div>
+                          <div class="text">{{ comment.content }}</div>
+                        </div>
+                      </div>
+                    </transition-group>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </transition>
+        </div>
       </div>
     </div>
-  </div>
 
-    <!-- Bottom Tab Bar -->
+    <!-- 底部导航栏 -->
     <div class="bottom-tab-bar">
       <div class="bottom-tabs">
         <div class="bottom-tab" :class="{ active: currentBottomTab === 'home' }" @click="switchBottomTab('home')">
+          <svg class="tab-icon" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9v8a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor"/></svg>
           <span>首页</span>
         </div>
-        <div class="bottom-tab" :class="{ active: currentBottomTab === 'publish' }" @click="switchBottomTab('publish')">
-          <span>+</span>
+        <div class="bottom-tab" :class="{ active: currentBottomTab === 'friends' }" @click="switchBottomTab('friends')">
+          <svg class="tab-icon" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05C15.64 13.36 17 14.28 17 15.5V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg>
+          <span>朋友</span>
+        </div>
+        <div class="bottom-tab plus" @click="switchBottomTab('publish')">
+          <div class="plus-btn">
+            <svg viewBox="0 0 48 48" width="36" height="36"><circle cx="24" cy="24" r="24" fill="#fff"/><rect x="22" y="12" width="4" height="24" rx="2" fill="#FE2C55"/><rect x="12" y="22" width="24" height="4" rx="2" fill="#FE2C55"/></svg>
+          </div>
         </div>
         <div class="bottom-tab" :class="{ active: currentBottomTab === 'message' }" @click="switchBottomTab('message')">
+          <svg class="tab-icon" viewBox="0 0 24 24"><path d="M21 6.5a2.5 2.5 0 0 0-2.5-2.5h-13A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h13a2.5 2.5 0 0 0 2.5-2.5v-11zm-2.5 0l-6.5 4.5-6.5-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>消息</span>
         </div>
         <div class="bottom-tab" :class="{ active: currentBottomTab === 'profile' }" @click="switchBottomTab('profile')">
+          <svg class="tab-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20v-1a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v1" fill="none" stroke="currentColor" stroke-width="2"/></svg>
           <span>我</span>
         </div>
       </div>
     </div>
-</div>
+  </div>
 </template>
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 
 interface Video {
   id: number
@@ -219,6 +248,8 @@ interface Video {
   isLiked: boolean
   isCollected: boolean
   isFollowing: boolean
+  musicCover?: string
+  musicName?: string
 }
 
 interface Danmaku {
@@ -644,6 +675,40 @@ const calculateDuration = (text) => {
   const textWidth = text.length * 14 // 保持字符宽度估算
   return (window.innerWidth + textWidth) / baseSpeed
 }
+
+const switchTopTab = (tab: string) => {
+  currentTopTab.value = tab
+}
+const switchBottomTab = (tab: string) => {
+  currentBottomTab.value = tab
+}
+
+// 2倍速播放相关
+let speedTimer: number | null = null
+const handleVideoPress = () => {
+  if (videoElement.value) {
+    videoElement.value.playbackRate = 2
+  }
+}
+const handleVideoRelease = () => {
+  if (videoElement.value) {
+    videoElement.value.playbackRate = 1
+  }
+}
+
+onMounted(() => {
+  if (videoElement.value) {
+    videoElement.value.loop = true
+    videoElement.value.addEventListener('touchstart', handleVideoPress)
+    videoElement.value.addEventListener('touchend', handleVideoRelease)
+  }
+})
+onUnmounted(() => {
+  if (videoElement.value) {
+    videoElement.value.removeEventListener('touchstart', handleVideoPress)
+    videoElement.value.removeEventListener('touchend', handleVideoRelease)
+  }
+})
 </script>
 
 <style scoped>
@@ -726,112 +791,341 @@ video {
 .progress-container {
   z-index: 100;
   position: absolute;
-  bottom: 37px;
+  bottom: 60px;
   left: 0;
   right: 0;
-  padding: 12px 20px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  padding: 0 0 0 16px;
+  display: flex;
+  align-items: center;
+  background: none;
 }
 
 .progress-bar {
-  width: 100%;
-  height: 3px;
-  -webkit-appearance: none;
-  background: rgba(255,255,255,0.2);
+  flex: 1;
+  height: 2.5px;
+  background: rgba(255,255,255,0.3);
   border-radius: 2px;
+  appearance: none;
+  outline: none;
 }
 
 .progress-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: #fff;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #FE2C55;
   border-radius: 50%;
-  transition: all 0.2s;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(254,44,85,0.2);
 }
 
 .progress-bar:active::-webkit-slider-thumb {
   transform: scale(1.2);
 }
 
-/* 用户交互面板优化 */
+.progress-music {
+  margin-left: 10px;
+}
+
+/* 视频底部信息区 */
+.video-info {
+  position: absolute;
+  left: 16px;
+  bottom: 80px;
+  color: #fff;
+  z-index: 10;
+  text-align: left;
+  width: 70vw;
+  max-width: 420px;
+}
+.video-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #fff;
+}
+.video-info .desc {
+  font-size: 15px;
+  margin-bottom: 4px;
+  color: #fff;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.tag {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 13px;
+}
+.music-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #fff;
+  margin-top: 2px;
+}
+.music-bar .music-icon {
+  font-size: 18px;
+}
+
+/* 底部导航栏（纯文字） */
+.bottom-tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(10px);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+.bottom-tabs {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  align-items: center;
+}
+.bottom-tab {
+  color: rgba(255,255,255,0.7);
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-weight: 500;
+  padding: 0 8px;
+}
+.bottom-tab.active {
+  color: #fff;
+  font-weight: 700;
+  border-bottom: 2.5px solid #fff;
+  padding-bottom: 2px;
+}
+
+/* 右侧操作区 - 抖音风格+动效 */
 .interaction-panel {
   position: absolute;
-  right: 15px;
-  bottom: 130px;
+  right: 16px;
+  bottom: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 25px;
-  color: white;
-  z-index: 2;
+  gap: 24px;
+  z-index: 10;
 }
-
-.user-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.avatar-wrapper {
+  position: relative;
+  margin-bottom: 12px;
 }
-
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border: 2.5px solid #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  object-fit: cover;
+  background: #222;
 }
-
 .follow-btn {
-  width: 24px;
-  height: 24px;
-  margin-top: 8px;
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #FF0045;
-  color: white;
-  border: none;
-  font-weight: bold;
+  background: #FE2C55;
+  border: 2px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(254,44,85,0.18);
+  z-index: 1;
+  animation: pop-in 0.4s cubic-bezier(.68,-0.55,.27,1.55);
+  transition: background 0.2s, transform 0.2s;
 }
-
+@keyframes pop-in {
+  0% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  80% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+.follow-btn:active {
+  transform: translateX(-50%) scale(0.92);
+}
 .follow-btn.followed {
-  background: #666;
+  display: none;
 }
-
-/* 操作按钮优化 */
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  align-items: center;
 }
-
 .action-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  color: #fff;
   cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s;
 }
-
+.action-item:active {
+  transform: scale(0.92);
+}
 .icon-wrapper {
+  width: 56px;
+  height: 56px;
+  background: rgba(0,0,0,0.32);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   position: relative;
-  width: 48px;
-  height: 48px;
+  transition: background 0.2s;
+}
+/* 点赞动画 */
+.icon-like {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s, filter 0.18s;
+}
+.action-item.liked .icon-like {
+  animation: like-bounce 0.32s cubic-bezier(.68,-0.55,.27,1.55);
+  filter: drop-shadow(0 0 8px #FE2C55);
+}
+@keyframes like-bounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  60% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.icon-like svg {
+  width: 32px;
+  height: 32px;
+}
+.icon-like .heart {
+  fill: #fff;
+  stroke: #fff;
+  stroke-width: 2.5;
+  transition: fill 0.18s;
+}
+.action-item.liked .icon-like .heart {
+  fill: #FE2C55;
+  stroke: #FE2C55;
+}
+/* 评论、收藏、分享图标 */
+.icon-comment, .icon-collect, .icon-share {
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
-.icon {
-  font-size: 32px;
-  transition: all 0.2s;
+.icon-comment svg, .icon-collect svg, .icon-share svg {
+  width: 30px;
+  height: 30px;
 }
-
+.icon-collect .star {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  transition: fill 0.18s;
+}
+.action-item.collected .icon-collect .star {
+  fill: #FFD700;
+  stroke: #FFD700;
+}
+.icon-share .share {
+  stroke: #fff;
+  stroke-width: 2.2;
+  fill: none;
+}
+/* 评论气泡 */
+.icon-comment .bubble {
+  stroke: #fff;
+  stroke-width: 2.2;
+  fill: none;
+}
+/* 数字样式 */
 .count {
-  font-size: 12px;
-  margin-top: 4px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  font-size: 14px;
+  color: #fff;
+  margin-top: 2px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.32);
+  font-family: 'DIN Alternate', 'Arial', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.music-disc-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+  gap: 2px;
+}
+.music-disc {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #222;
+  border: 2.5px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: disc-rotate 2.5s linear infinite;
+  margin-bottom: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  position: relative;
+}
+.music-disc::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+@keyframes disc-rotate {
+  100% { transform: rotate(360deg); }
+}
+.music-disc img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 1;
+}
+.music-name {
+  color: #fff;
+  font-size: 13px;
+  max-width: 64px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.92;
 }
 
 /* 动画效果 */
@@ -861,46 +1155,6 @@ video {
   opacity: 0;
 }
 
-/* 视频信息优化 */
-.video-info {
-  /* 基础样式 */
-  color: white;
-  margin-bottom: 12px;
-
-  /* 对齐控制 */
-  text-align: left;
-  align-self: flex-start; /* 如果父级是flex布局 */
-
-  /* 内容宽度控制 */
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-
-  /* 内部元素间距 */
-  & h3, & p, & .tags {
-    margin-left: 0;
-    margin-right: auto; /* 保持左对齐惯性 */
-  }
-}
-
-.video-info h3 {
-  margin: 0;
-  font-size: 16px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-.video-info p {
-  margin: 4px 0;
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-.tags {
-  display: flex;
-  gap: 6px;
-  font-size: 12px;
-  opacity: 0.8;
-}
 /* 评论按钮样式 */
 .action-item {
   cursor: pointer;
@@ -940,7 +1194,12 @@ video {
   padding: 16px;
   border-bottom: 1px solid #eee;
 }
-
+/* 评论抽屉数字特殊样式 */
+.drawer-header h3 {
+  font-size: 16px;
+  color: #333;
+  font-weight: 700;
+}
 .close-btn {
   font-size: 24px;
   background: none;
@@ -1136,11 +1395,25 @@ video {
   transform: scale(0.9);
 }
 
+/* 数字计数样式优化 */
 .count {
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-  font-family: system-ui;
+  font-size: 14px;  /* 增大字号 */
+  font-weight: 600; /* 加粗字体 */
+  color: white;
+  margin-top: 2px;
+  text-shadow:
+      0 1px 3px rgba(0,0,0,0.5),
+      0 0 6px rgba(255,255,255,0.3); /* 双层阴影增强对比 */
+  letter-spacing: 0.5px; /* 增加字间距 */
+  transition: all 0.3s ease;
+}
+
+/* 互动按钮悬停效果 */
+.action-item:hover .count {
+  transform: scale(1.1);
+  text-shadow:
+      0 2px 4px rgba(0,0,0,0.6),
+      0 0 8px rgba(255,255,255,0.4);
 }
 
 /* 过渡效果优化 */
@@ -1351,59 +1624,112 @@ html, body, .app-container {
 }
 /* Top Tab Bar */
 .top-tab-bar {
-  background-color: #000;
-  color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
 }
-
-.top-tab {
-  color: rgba(255, 255, 255, 0.7); /* 默认半透明白色 */
-}
-
-.top-tab.active {
-  color: #fff; /* 选中时完全不透明白色 */
-  font-weight: bold; /* 可选：加粗字体 */
-}
-
 
 .top-tabs {
   display: flex;
-  justify-content: space-around;
-  height:39px
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
 }
-
-
-
+.top-tab {
+  color: rgba(255,255,255,0.6);
+  font-size: 16px;
+  padding: 0 6px;
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.top-tab.active {
+  color: #fff;
+  font-weight: 600;
+}
+.tab-underline {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 3px;
+  background: #fff;
+  border-radius: 2px;
+}
+.top-search {
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.search-icon {
+  width: 22px;
+  height: 22px;
+  fill: #fff;
+}
 
 /* Bottom Tab Bar */
 .bottom-tab-bar {
-  background-color: #000;
-  color: #fff;
-  height: 50px; /* 标准Tab栏高度 */
-  flex-shrink: 0;
   position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
-  width: 100%;
   z-index: 100;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(10px);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 }
-
+.bottom-tabs {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  align-items: center;
+}
 .bottom-tab {
-  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s;
+  min-width: 48px;
 }
-
 .bottom-tab.active {
   color: #fff;
 }
-
-
-.bottom-tabs {
+.tab-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+}
+.plus {
+  position: relative;
+  top: -18px;
+  z-index: 2;
+}
+.plus-btn {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #FE2C55 60%, #fff 100%);
+  border-radius: 50%;
   display: flex;
-  justify-content: space-around;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(254,44,85,0.15);
+  border: 4px solid #fff;
 }
-
-
-
-.bottom-tab span {
-  font-size: 20px;
-}
-
 </style>
