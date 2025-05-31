@@ -5,7 +5,7 @@
     "paths": { "@/*": ["./src/*"] },
     "isolatedModules": false,
     "ignoreDeprecations": "5.0",
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": false
   },
   "files": [],
   "references": [
