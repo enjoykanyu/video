@@ -233,6 +233,7 @@
 </template>
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import request from '../utils/request.ts'
 
 interface Video {
   id: number
@@ -468,16 +469,25 @@ const handleSeek = (e: Event) => {
 
 // 交互逻辑
 const handleLike = () => {
+  request.post("api/video/like").then(res => {
+
+  })
   currentVideo.value.isLiked = !currentVideo.value.isLiked
   currentVideo.value.likes += currentVideo.value.isLiked ? 1 : -1
 }
 
 const handleCollect = () => {
+  request.post("api/video/collect").then(res => {
+
+  })
   currentVideo.value.isCollected = !currentVideo.value.isCollected
   currentVideo.value.collects += currentVideo.value.isCollected ? 1 : -1
 }
 
 const toggleFollow = () => {
+  request.post("api/video/follow").then(res => {
+
+  })
   currentVideo.value.isFollowing = !currentVideo.value.isFollowing
 }
 
