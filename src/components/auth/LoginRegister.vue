@@ -164,8 +164,8 @@ let timer: number | null = null
 const handleLogin=()=> {
   console.log(loginType.value)
   const apiPath = loginType.value === 'password'
-      ? 'api/user/login'
-      : 'api/user/login/code'
+      ? 'api/douyin/user/login'
+      : 'api/douyin/user/login/code'
 
   const payload = loginType.value === 'password'
       ? {
@@ -215,6 +215,7 @@ const sendCode = () => {
   }
 
   countdown.value = 60
+  console.log(333)
   timer = setInterval(() => {
     countdown.value--
     if (countdown.value <= 0 && timer) {
@@ -222,13 +223,11 @@ const sendCode = () => {
       timer = null
     }
   }, 1000)
-  console.log(loginForm.code)
-  request.post(`/api/user/code?phone=${loginForm.phone}`).then((res) => {
+  request.post(`/api/douyin/user/code?phone=${loginForm.phone}`).then((res) => {
     console.log(res)
     console.log(333)
-    alert("您本次的验证码为"+res.data.data.code+"有效期5分钟")
-    window.sessionStorage.setItem("token", res.data.data.token)
-    console.log(window.sessionStorage.getItem("token"))
+    // alert("您本次的验证码为"+res.data.data.code+"有效期5分钟")
+    // console.log(window.sessionStorage.getItem("token"))
   })
 }
 
