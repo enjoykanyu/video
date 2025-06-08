@@ -174,24 +174,25 @@ const handleLogin=()=> {
       }
       : {
         phone: loginForm.phone,
-        code: loginForm.code
+        verifyCode: loginForm.code
       }
   console.log(apiPath)
   request.post(apiPath, payload).then((res) => {
-    console.log(res)
-    console.log(333)
     if (res.data.success) {
+      console.log(res.data)
+      console.log(res)
+      console.log(333)
       if ( loginType.value === 'code'){
-        window.sessionStorage.setItem("token", res.data.data)
+        window.sessionStorage.setItem("token", res.data.token)
       }else {
-        window.sessionStorage.setItem("token", res.data.data.token)
+        window.sessionStorage.setItem("token", res.data.token)
 
       }
       console.log(window.sessionStorage.getItem("token"))
       console.log(res.data.success)
       // 登录成功逻辑
       router.push('/')
-    }else if (res.data.errorMsg === '用户不存在') {
+    }else if (res.data === '用户不存在') {
       alert("用户不存在，请注册")
       activeTab.value = 'register'
     }else {
